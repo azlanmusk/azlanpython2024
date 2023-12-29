@@ -7,6 +7,9 @@ pygame.init()
 WINDOW_WIDTH = 1000
 WINDOW_HEIGHT = 400
 WINDOW_HEIGHT = 500
+AZLAN_Class = "Grade 6J"
+AMNA_Class = "Grade 4H"
+ZARA_Class = "Grade 1A"
 Azlan=5
 display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Feed the Dragon")
