@@ -31,7 +31,7 @@ class Airplane:
     def update(self, weather, direction):
         # Update based on weather
         if weather.type == "storm":
-            self.control_difficulty = 3
+            self.control_difficulty = 4
         elif weather.type == "windy":
             self.control_difficulty = 2
         else:
