@@ -3,97 +3,123 @@ import pygame
 
 # Initialize Pygame and create a window
 pygame.init()
+pygame.key.set_repeat(1, 10)  # Add this line
 screen = pygame.display.set_mode((800, 600))
 
-# Load images (replace with actual file paths)
+# Load images
 airplane_image = pygame.image.load("D:/AzlanCoding/Python/azlanpython2024/airplane.png")
-# Scale the image to new size, e.g., 100x50 pixels
 airplane_image = pygame.transform.scale(airplane_image, (100, 50))
-
-
-# Define constants for movement
-UP = (0, -1)
-DOWN = (0, 1)
-LEFT = (-1, 0)
-RIGHT = (1, 0)
+cloud_image = pygame.image.load("D:/AzlanCoding/Python/azlanpython2024/cloud.png")
+maps = [pygame.image.load("D:/AzlanCoding/Python/azlanpython2024/map1.png"), 
+        pygame.image.load("D:/AzlanCoding/Python/azlanpython2024/map2.png"),
+        pygame.image.load("D:/AzlanCoding/Python/azlanpython2024/map3.png")]
 
 # Define the Airplane class
 class Airplane:
     def __init__(self):
-        self.position = [400, 300]
+        self.position = [400, 300]  # Start position
         self.speed = 5
-        self.lights_on = False
-        self.control_difficulty = 1  # Normal difficulty
+        self.is_flying = True
+        self.in_emergency = False
+        self.direction = [0, 0]  # Initial direction
 
     def draw(self, screen):
+        # Draw the airplane image at its current position
         screen.blit(airplane_image, self.position)
 
-    def update(self, weather, direction):
-        # Update based on weather
-        if weather.type == "storm":
-            self.control_difficulty = 4
-        elif weather.type == "windy":
-            self.control_difficulty = 2
-        else:
-            self.control_difficulty = 1
+    def update(self):
+      self.position[0] += self.direction[0] * self.speed
+      self.position[1] += self.direction[1] * self.speed
+      print(f"Updating position to {self.position}")
 
-        # Move the airplane based on control difficulty and direction
-        self.position[0] += direction[0] * self.speed / self.control_difficulty
-        self.position[1] += direction[1] * self.speed / self.control_difficulty
+    def initiate_emergency_landing(self, runway):
+        self.in_emergency = True
+        self.direction = [0, -1]  # Direct the airplane towards the runway for landing
+        self.speed = 2  # Slow down for landing
+
+    def check_runway(self, runway):
+        if runway.rect.collidepoint(self.position[0], self.position[1]):
+            self.is_flying = False
+            print("Airplane has landed on the runway.")
+
+# Define the Runway class
+class Runway:
+    def __init__(self):
+        self.rect = pygame.Rect(300, 500, 200, 100)  # Modify as needed
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, (128, 128, 128), self.rect)
+        # Draw white lines
+        pygame.draw.line(screen, (255, 255, 255), (300, 500), (300, 600), 5)  # Left line
+        pygame.draw.line(screen, (255, 255, 255), (500, 500), (500, 600), 5)  # Right line
 
 # Define the Weather class
 class Weather:
     def __init__(self):
         self.type = "clear"
+        self.emergency = False
 
     def randomize(self):
-        if random.random() < 0.5:
-            self.type = "storm"
-        else:
-            self.emergency = True
+        # Randomize weather and emergency conditions
+        self.type = "storm" if random.random() < 0.5 else "clear"
+        self.emergency = True if random.random() < 0.2 else False
+
+    def draw(self, screen):
+        if self.type == "storm":
+            screen.blit(cloud_image, (100, 50))
 
 # Define the Map class
 class Map:
-    def __init__(self, map_image):
-        self.image = map_image
-        self.position = [0, 0]
+    def __init__(self, image):
+        self.image = image
 
     def draw(self, screen):
-        screen.blit(self.image, self.position)
+        screen.blit(self.image, (0, 0))
 
-# Load map images (replace with actual file paths)
-map_images = [pygame.image.load("D:/AzlanCoding/Python/azlanpython2024/map1.png"), pygame.image.load("D:/AzlanCoding/Python/azlanpython2024/map2.png"), pygame.image.load("D:/AzlanCoding/Python/azlanpython2024/map3.png")]
-
-# Main game loop
+# Initialize game elements
 airplane = Airplane()
 weather = Weather()
-current_map = Map(random.choice(map_images))  # Choose a random map
+current_map = Map(random.choice(maps))
+runway = Runway()
 
+# Before the main game loop
+clock = pygame.time.Clock()
+
+# Main game loop
 running = True
 while running:
-    direction = [0, 0]
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.KEYDOWN:
+        elif event.type == pygame.KEYDOWN:
+            print("Key pressed")
             if event.key == pygame.K_UP:
-                direction = UP
+                airplane.direction = [0, -1]
+                print("Moving Up")
             elif event.key == pygame.K_DOWN:
-                direction = DOWN
+                airplane.direction = [0, 1]
             elif event.key == pygame.K_LEFT:
-                direction = LEFT
+                airplane.direction = [-1, 0]
             elif event.key == pygame.K_RIGHT:
-                direction = RIGHT
+                airplane.direction = [1, 0]
+        elif event.type == pygame.KEYUP:
+            airplane.direction = [0, 0]  # Stop moving when the key is released
 
+    
     # Update game elements
     weather.randomize()
-    airplane.update(weather, direction)
+    airplane.update()
+    if weather.emergency and airplane.is_flying:
+        airplane.initiate_emergency_landing(runway)
+    airplane.check_runway(runway)
 
     # Drawing
     screen.fill((0, 0, 0))  # Clear screen
     current_map.draw(screen)
+    runway.draw(screen)
     airplane.draw(screen)
 
     pygame.display.flip()  # Update the screen
+    clock.tick(60)
 
 pygame.quit()
